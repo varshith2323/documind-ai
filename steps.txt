@@ -1,0 +1,57 @@
+--checking the python version
+python --version
+
+--checking versions
+py --list
+
+--checking pip
+python -m pip --version
+
+--python version used for this project
+python 3.13.12
+
+--creating virtual environment
+py 3.13 -m venv .venv
+
+
+--activating virtual environment
+
+.\.venv\Scripts\Activate.ps1
+
+--verify the environment
+python --version
+
+python -m pip --version
+
+--install django
+python -m pip install "Django>=5.2,<5.3"
+
+--verify the django installation
+python -m django --version
+
+--Create the Django project
+django-admin startproject config .
+
+--start the server
+python manage.py runserver
+
+--create the chatbot app
+python manage.py startapp chatbot
+
+--verify the setup in the second terminal
+python manage.py check
+
+--install the dependencies
+pip install -r requiremens.txt
+
+--after installation,verify the packages
+python -m pip check
+
+--then test the imports
+python -c "import django, langchain, chromadb, pypdf, dotenv; print('All core imports successful')"
+
+--after creating the sample document,generate the pypdf
+python -m pip install reportlab
+
+--run the application
+python manage.py runserver
