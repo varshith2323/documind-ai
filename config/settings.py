@@ -23,9 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--onxy7$ojr545y@zjbk8hieuvebb5p#o=5tpd#vx6ied$4txb%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "documind-ai-ysfx.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
