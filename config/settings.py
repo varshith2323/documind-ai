@@ -27,9 +27,13 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     "documindai-geg6.onrender.com",
+    ".onrender.com",
     "localhost",
     "127.0.0.1",
 ]
+
+# Tell Django to trust the X-Forwarded-Proto header from Render's reverse proxy
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
@@ -130,4 +134,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 CSRF_TRUSTED_ORIGINS = [
     "https://documindai-geg6.onrender.com",
+    "https://*.onrender.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]

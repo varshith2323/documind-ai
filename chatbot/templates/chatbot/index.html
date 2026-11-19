@@ -800,6 +800,7 @@
     </style>
 </head>
 <body>
+{% csrf_token %}
 
 <div class="layout">
     <!-- ================= SIDEBAR ================= -->
@@ -965,6 +966,23 @@
         return "";
     }
 
+    function getCsrfToken() {
+        const cookieVal = getCookie("csrftoken");
+        if (cookieVal) return cookieVal;
+        const inputVal = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (inputVal && inputVal.value) return inputVal.value;
+        return "{{ csrf_token }}";
+    }
+
+    async function parseJsonResponse(res) {
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+            return await res.json();
+        }
+        const text = await res.text();
+        throw new Error(`Server returned ${res.status} (${res.statusText || "Unexpected error"})`);
+    }
+
     // DOM Elements
     const chatContainer = document.getElementById("chat-container");
     const chatMessages = document.getElementById("chat-messages");
@@ -1013,7 +1031,7 @@
     async function checkUserStatus() {
         try {
             const res = await fetch("/api/user/");
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             currentUser = data.authenticated ? data : null;
             renderSidebarFooter();
         } catch (e) {
@@ -1050,7 +1068,7 @@
         try {
             await fetch("/api/logout/", {
                 method: "POST",
-                headers: { "X-CSRFToken": getCookie("csrftoken") }
+                headers: { "X-CSRFToken": getCsrfToken() }
             });
             currentUser = null;
             renderSidebarFooter();
@@ -1093,11 +1111,11 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
+                    "X-CSRFToken": getCsrfToken()
                 },
                 body: JSON.stringify({ username, password })
             });
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             if (!res.ok) throw new Error(data.error || "Login failed");
 
             authModal.classList.remove("open");
@@ -1122,11 +1140,11 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
+                    "X-CSRFToken": getCsrfToken()
                 },
                 body: JSON.stringify({ username, email, password })
             });
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             if (!res.ok) throw new Error(data.error || "Registration failed");
 
             authModal.classList.remove("open");
@@ -1144,7 +1162,7 @@
     async function loadChatSessions() {
         try {
             const res = await fetch("/api/chats/");
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             renderChatList(data.sessions || []);
         } catch (e) {
             console.error("Failed to load chats", e);
@@ -1193,7 +1211,7 @@
 
         try {
             const res = await fetch(`/api/chats/${sessionId}/`);
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             activeChatTitle.textContent = data.title || "Conversation";
 
             chatMessages.innerHTML = "";
@@ -1215,7 +1233,7 @@
         try {
             await fetch(`/api/chats/${sessionId}/`, {
                 method: "DELETE",
-                headers: { "X-CSRFToken": getCookie("csrftoken") }
+                headers: { "X-CSRFToken": getCsrfToken() }
             });
             if (currentSessionId == sessionId) {
                 startNewChat();
@@ -1244,7 +1262,7 @@
     async function loadDocuments() {
         try {
             const res = await fetch("/api/documents/");
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             renderDocList(data.documents || []);
         } catch (e) {
             console.error("Failed to load documents", e);
@@ -1300,10 +1318,10 @@
         try {
             const res = await fetch("/upload/", {
                 method: "POST",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
+                headers: { "X-CSRFToken": getCsrfToken() },
                 body: formData
             });
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
 
             if (!res.ok) throw new Error(data.error || "Upload failed");
 
@@ -1366,7 +1384,7 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
+                    "X-CSRFToken": getCsrfToken()
                 },
                 body: JSON.stringify({
                     question,
@@ -1374,7 +1392,7 @@
                 })
             });
 
-            const data = await res.json();
+            const data = await parseJsonResponse(res);
             loadingBubble.remove();
 
             if (!res.ok) throw new Error(data.error || "Unable to generate answer.");

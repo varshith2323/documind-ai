@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 
 from chatbot.document_processor import process_pdf
@@ -41,6 +42,7 @@ def _get_or_create_session(request, session_id=None):
         return ChatSession.objects.create(session_key=session_key, title="New Conversation")
 
 
+@ensure_csrf_cookie
 def home(request):
     """Display the DocuMind AI chat page."""
     return render(request, "chatbot/index.html")
