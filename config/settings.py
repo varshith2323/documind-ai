@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure--onxy7$ojr545y@zjbk8hieuvebb5p#o=5tpd#vx6ied$4txb%
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "documind-ai-ysfx.onrender.com",
+    "https://documindai-geg6.onrender.com",
     "localhost",
     "127.0.0.1",
 ]
@@ -127,3 +127,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://documindai-geg6.onrender.com",
+]
