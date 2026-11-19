@@ -1,6 +1,8 @@
-import os
-import uuid
 import hashlib
+import logging
+import os
+import time
+import uuid
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -72,10 +74,30 @@ def create_vector_store(chunks, source_name="unknown", file_hash=None):
         chunk.metadata["file_hash"] = file_hash
         document_ids.append(str(uuid.uuid4()))
 
-    vector_store.add_documents(
-        documents=chunks,
-        ids=document_ids,
-    )
+    # Process in batches with exponential backoff on 429 quota exhaustion
+    batch_size = 20
+    for i in range(0, len(chunks), batch_size):
+        batch_chunks = chunks[i:i + batch_size]
+        batch_ids = document_ids[i:i + batch_size]
+
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                vector_store.add_documents(
+                    documents=batch_chunks,
+                    ids=batch_ids,
+                )
+                break
+            except Exception as e:
+                err_str = str(e)
+                if ("RESOURCE_EXHAUSTED" in err_str or "429" in err_str) and attempt < max_retries - 1:
+                    sleep_sec = 6 * (attempt + 1)
+                    time.sleep(sleep_sec)
+                else:
+                    raise
+
+        if i + batch_size < len(chunks):
+            time.sleep(0.5)
 
     return {
         "status": "indexed",

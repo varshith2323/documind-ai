@@ -372,10 +372,17 @@ def ask_question(request):
             status=400,
         )
 
-    except Exception:
-        logger.exception("Question answering failed")
+    except Exception as e:
+        logger.exception("Question answering failed: %s", e)
+        err_msg = str(e)
+        if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
+            user_msg = "Gemini API rate limit reached. Please wait a minute and try again."
+        elif "GEMINI_API_KEY" in err_msg:
+            user_msg = "GEMINI_API_KEY is missing or invalid in environment settings."
+        else:
+            user_msg = f"Unable to generate an answer: {err_msg}"
         return JsonResponse(
-            {"error": "Unable to generate an answer. Please try again."},
+            {"error": user_msg},
             status=500,
         )
 
@@ -485,9 +492,16 @@ def upload_document(request):
     except ValueError as error:
         return JsonResponse({"error": str(error)}, status=400)
 
-    except Exception:
-        logger.exception("Document upload and indexing failed")
+    except Exception as e:
+        logger.exception("Document upload and indexing failed: %s", e)
+        err_msg = str(e)
+        if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
+            user_msg = "Gemini API rate limit reached. Please wait a minute and try again."
+        elif "GEMINI_API_KEY" in err_msg:
+            user_msg = "GEMINI_API_KEY is missing or invalid in environment settings."
+        else:
+            user_msg = f"Document processing failed: {err_msg}"
         return JsonResponse(
-            {"error": "Document processing failed. Check the Django terminal."},
+            {"error": user_msg},
             status=500,
         )
