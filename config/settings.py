@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure--onxy7$ojr545y@zjbk8hieuvebb5p#o=5tpd#vx6ied$4txb%
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "https://documindai-geg6.onrender.com",
+    "documindai-geg6.onrender.com",
     "localhost",
     "127.0.0.1",
 ]
