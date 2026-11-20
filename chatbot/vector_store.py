@@ -8,7 +8,17 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+# Load .env from workspace
 load_dotenv()
+
+# Also load from Render's Secret Files mount (/etc/secrets/) if present
+if os.path.isdir("/etc/secrets"):
+    for fname in os.listdir("/etc/secrets"):
+        fpath = os.path.join("/etc/secrets", fname)
+        if os.path.isfile(fpath):
+            load_dotenv(fpath)
+
+logger = logging.getLogger(__name__)
 
 # Store our vector database inside the project directory.
 VECTOR_STORE_PATH = "chroma_db"
@@ -17,7 +27,8 @@ COLLECTION_NAME = "documind_documents"
 
 def get_api_key():
     """Retrieve and sanitize the Gemini API key from environment variables.
-    Handles case-insensitivity, leading/trailing whitespace in key or value, and surrounding quotes.
+    Handles case-insensitivity, leading/trailing whitespace in key or value, surrounding quotes,
+    and checks Django settings and Render secret files.
     """
     # 0. Check Django settings
     settings_key = getattr(settings, "GEMINI_API_KEY", None)
@@ -25,7 +36,7 @@ def get_api_key():
         return str(settings_key).strip().strip("'\"")
 
     # 1. Exact match checks
-    for key_name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_KEY"):
+    for key_name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_KEY", "API_KEY"):
         val = os.getenv(key_name)
         if val:
             clean = val.strip().strip("'\"")
@@ -35,16 +46,16 @@ def get_api_key():
     # 2. Case-insensitive and whitespace-trimmed search across all environment variables
     for k, v in os.environ.items():
         clean_k = k.strip().upper()
-        if clean_k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_KEY"):
+        if clean_k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_KEY", "API_KEY"):
             if v and v.strip().strip("'\""):
                 return v.strip().strip("'\"")
         if ("GEMINI" in clean_k and "KEY" in clean_k) or ("GOOGLE" in clean_k and "KEY" in clean_k):
             if v and v.strip().strip("'\""):
                 return v.strip().strip("'\"")
 
-    # Log available matching key names to help debugging in Render logs
-    matching_keys = [k for k in os.environ.keys() if any(w in k.upper() for w in ("GEMINI", "GOOGLE", "API", "KEY"))]
-    logger.warning("No Gemini API key found. Visible matching keys in environment: %s", matching_keys)
+    # Visible keys to help diagnosis
+    visible_keys = [k for k in os.environ.keys() if not k.startswith("_") and "PATH" not in k]
+    logger.warning("No Gemini API key found. Visible environment variables: %s", visible_keys)
     return None
 
 
@@ -53,8 +64,10 @@ def get_embeddings():
     api_key = get_api_key()
 
     if not api_key:
+        visible_keys = [k for k in os.environ.keys() if any(w in k.upper() for w in ("GEMINI", "GOOGLE", "API", "KEY", "RENDER", "SECRET"))]
         raise RuntimeError(
-            "GEMINI_API_KEY is missing in Render environment variables."
+            f"GEMINI_API_KEY not found in Render environment. (Detected keys: {visible_keys}). "
+            "Please ensure Key is GEMINI_API_KEY in Render Dashboard -> Environment."
         )
 
     return GoogleGenerativeAIEmbeddings(
