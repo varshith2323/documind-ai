@@ -16,11 +16,11 @@ COLLECTION_NAME = "documind_documents"
 
 def get_embeddings():
     """Create the Gemini embedding model."""
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
 
     if not api_key:
         raise RuntimeError(
-            "GEMINI_API_KEY is missing from the .env file."
+            "GEMINI_API_KEY is missing or invalid in environment settings."
         )
 
     return GoogleGenerativeAIEmbeddings(
