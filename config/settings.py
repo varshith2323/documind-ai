@@ -146,6 +146,9 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
 ]
 
+# Gemini API Key from environment
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
 # Logging — show errors in Render logs
 LOGGING = {
     'version': 1,

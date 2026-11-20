@@ -3,6 +3,7 @@ import logging
 import os
 import time
 import uuid
+from django.conf import settings
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -15,13 +16,35 @@ COLLECTION_NAME = "documind_documents"
 
 
 def get_api_key():
-    """Retrieve and sanitize the Gemini API key from environment variables."""
-    for key_name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY"):
+    """Retrieve and sanitize the Gemini API key from environment variables.
+    Handles case-insensitivity, leading/trailing whitespace in key or value, and surrounding quotes.
+    """
+    # 0. Check Django settings
+    settings_key = getattr(settings, "GEMINI_API_KEY", None)
+    if settings_key and str(settings_key).strip().strip("'\""):
+        return str(settings_key).strip().strip("'\"")
+
+    # 1. Exact match checks
+    for key_name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_KEY"):
         val = os.getenv(key_name)
         if val:
             clean = val.strip().strip("'\"")
             if clean:
                 return clean
+
+    # 2. Case-insensitive and whitespace-trimmed search across all environment variables
+    for k, v in os.environ.items():
+        clean_k = k.strip().upper()
+        if clean_k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_KEY"):
+            if v and v.strip().strip("'\""):
+                return v.strip().strip("'\"")
+        if ("GEMINI" in clean_k and "KEY" in clean_k) or ("GOOGLE" in clean_k and "KEY" in clean_k):
+            if v and v.strip().strip("'\""):
+                return v.strip().strip("'\"")
+
+    # Log available matching key names to help debugging in Render logs
+    matching_keys = [k for k in os.environ.keys() if any(w in k.upper() for w in ("GEMINI", "GOOGLE", "API", "KEY"))]
+    logger.warning("No Gemini API key found. Visible matching keys in environment: %s", matching_keys)
     return None
 
 
