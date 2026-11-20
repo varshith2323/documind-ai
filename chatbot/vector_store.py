@@ -14,13 +14,24 @@ VECTOR_STORE_PATH = "chroma_db"
 COLLECTION_NAME = "documind_documents"
 
 
+def get_api_key():
+    """Retrieve and sanitize the Gemini API key from environment variables."""
+    for key_name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY"):
+        val = os.getenv(key_name)
+        if val:
+            clean = val.strip().strip("'\"")
+            if clean:
+                return clean
+    return None
+
+
 def get_embeddings():
     """Create the Gemini embedding model."""
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    api_key = get_api_key()
 
     if not api_key:
         raise RuntimeError(
-            "GEMINI_API_KEY is missing or invalid in environment settings."
+            "GEMINI_API_KEY is missing in Render environment variables."
         )
 
     return GoogleGenerativeAIEmbeddings(

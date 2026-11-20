@@ -377,8 +377,10 @@ def ask_question(request):
         err_msg = str(e)
         if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
             user_msg = "Gemini API rate limit reached. Please wait a minute and try again."
-        elif "GEMINI_API_KEY" in err_msg:
-            user_msg = "GEMINI_API_KEY is missing or invalid in environment settings."
+        elif "missing in Render environment variables" in err_msg:
+            user_msg = "GEMINI_API_KEY is not set on Render. Please add it in Render Dashboard -> Environment."
+        elif "API_KEY_INVALID" in err_msg or "INVALID_ARGUMENT" in err_msg or "400" in err_msg:
+            user_msg = f"Gemini API key is invalid or rejected by Google: {err_msg}"
         else:
             user_msg = f"Unable to generate an answer: {err_msg}"
         return JsonResponse(
@@ -497,8 +499,10 @@ def upload_document(request):
         err_msg = str(e)
         if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
             user_msg = "Gemini API rate limit reached. Please wait a minute and try again."
-        elif "GEMINI_API_KEY" in err_msg:
-            user_msg = "GEMINI_API_KEY is missing or invalid in environment settings."
+        elif "missing in Render environment variables" in err_msg:
+            user_msg = "GEMINI_API_KEY is not set on Render. Please add it in Render Dashboard -> Environment."
+        elif "API_KEY_INVALID" in err_msg or "INVALID_ARGUMENT" in err_msg:
+            user_msg = f"Gemini API key is invalid or rejected: {err_msg}"
         else:
             user_msg = f"Document processing failed: {err_msg}"
         return JsonResponse(

@@ -1,6 +1,6 @@
 import re
 from langchain_google_genai import ChatGoogleGenerativeAI
-from chatbot.vector_store import search_documents
+from chatbot.vector_store import search_documents, get_api_key
 
 
 def generate_answer(question):
@@ -27,8 +27,13 @@ def generate_answer(question):
     context = "\n\n".join(context_parts)
 
     # 3. Configure the language model.
+    api_key = get_api_key()
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is missing in Render environment variables.")
+
     llm = ChatGoogleGenerativeAI(
         model="gemini-3.5-flash-lite",
+        google_api_key=api_key,
     )
 
     # 4. Instruct the LLM with strict grounding and source attribution.
